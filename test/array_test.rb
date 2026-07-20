@@ -146,6 +146,8 @@ class ArrayTest < Minitest::Test
   def test_polars
     skip unless polars?
 
+    require "bigdecimal"
+
     today = Date.today
     now = Time.now
     df =
@@ -153,22 +155,24 @@ class ArrayTest < Minitest::Test
         "a" => [1, 2, 3],
         "b" => ["one", "two", "three"],
         "c" => [today, nil, today + 2],
-        "d" => [now, nil, now + 2]
+        "d" => [now, nil, now + 2],
+        "e" => [BigDecimal("1"), BigDecimal("0.001"), BigDecimal("-1.23456789")]
       })
     a = Nanoarrow::Array.new(df)
     df = nil
     GC.start
-    assert_equal "#<Nanoarrow::Array struct<a: int64, b: string_view, c: date32, d: timestamp('ns', '')>[3]>", a.inspect
+    assert_equal "#<Nanoarrow::Array struct<a: int64, b: string_view, c: date32, d: timestamp('ns', ''), e: decimal128(38, 8)>[3]>", a.inspect
     schema = a.schema
     assert_equal "struct", schema.type
-    assert_equal ["int64", "string_view", "date32", "timestamp"], schema.fields.map(&:type)
-    assert_equal 4, a.n_children
+    assert_equal ["int64", "string_view", "date32", "timestamp", "decimal128"], schema.fields.map(&:type)
+    assert_equal 5, a.n_children
     assert_array [1, 2, 3], a.child(0)
     assert_array ["one", "two", "three"], a.child(1)
     assert_array [today, nil, today + 2], a.child(2)
     assert_array [now, nil, now + 2], a.child(3)
+    assert_array [BigDecimal("1"), BigDecimal("0.001"), BigDecimal("-1.23456789")], a.child(4)
     assert_raises(IndexError) do
-      a.child(4)
+      a.child(5)
     end
     assert_raises(IndexError) do
       a.child(-1)

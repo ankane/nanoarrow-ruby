@@ -162,6 +162,40 @@ static VALUE array_view_each_binary(VALUE self)
     return self;
 }
 
+static VALUE array_view_each_decimal(VALUE self, VALUE bitwidth, VALUE precision, VALUE scale)
+{
+    array_view_t* view;
+    GetArrayView(self, view);
+
+    struct ArrowDecimal decimal;
+    ArrowDecimalInit(&decimal, NUM2INT(bitwidth), NUM2INT(precision), NUM2INT(scale));
+
+    struct ArrowBuffer buffer;
+    ArrowBufferInit(&buffer);
+
+    for (int64_t i = 0; i < view->ptr->length; i++)
+    {
+        VALUE v;
+        if (ArrowArrayViewIsNull(view->ptr, i))
+            v = Qnil;
+        else
+        {
+            ArrowArrayViewGetDecimalUnsafe(view->ptr, i, &decimal);
+            int code = ArrowDecimalAppendStringToBuffer(&decimal, &buffer);
+            if (code != NANOARROW_OK)
+            {
+                ArrowBufferReset(&buffer);
+                raise_error_not_ok("ArrowDecimalAppendStringToBuffer()", code);
+            }
+            v = rb_str_new((char*) buffer.data, buffer.size_bytes);
+            ArrowBufferReset(&buffer);
+        }
+        rb_yield(v);
+    }
+
+    return self;
+}
+
 void Init_array_view(void)
 {
     cCArrayView = rb_define_class_under(mNanoarrow, "CArrayView", rb_cObject);
@@ -174,4 +208,5 @@ void Init_array_view(void)
     rb_define_method(cCArrayView, "each_double", array_view_each_double, 0);
     rb_define_method(cCArrayView, "each_string", array_view_each_string, 0);
     rb_define_method(cCArrayView, "each_binary", array_view_each_binary, 0);
+    rb_define_method(cCArrayView, "each_decimal", array_view_each_decimal, 3);
 }

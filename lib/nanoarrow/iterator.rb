@@ -85,6 +85,12 @@ module Nanoarrow
       @array_view.each_int(&wrap)
     end
 
+    def each_decimal(&block)
+      bitwidth = @schema_view.type_id == Type::DECIMAL128 ? 128 : 256
+      wrap = ->(v) { block.call(v.nil? ? v : BigDecimal(v)) }
+      @array_view.each_decimal(bitwidth, @schema_view.decimal_precision, @schema_view.decimal_scale, &wrap)
+    end
+
     ITEMS_ITER_LOOKUP = {
       Type::BOOL => :each_bool,
       Type::INT8 => :each_int,
@@ -108,6 +114,8 @@ module Nanoarrow
       Type::DATE32 => :each_date,
       Type::DATE64 => :each_date,
       Type::TIMESTAMP => :each_timestamp,
+      Type::DECIMAL128 => :each_decimal,
+      Type::DECIMAL256 => :each_decimal
     }
   end
 end
