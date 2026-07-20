@@ -147,11 +147,17 @@ module Nanoarrow
     Schema.new(Type::DICTIONARY, index_type:, value_type:, dictionary_ordered:)
   end
 
-  def self.sparse_union(fields, nullable: true)
-    Schema.new(Type::SPARSE_UNION, fields:, nullable:)
+  def self.sparse_union(fields, type_codes: nil, nullable: true)
+    if type_codes.nil?
+      type_codes = fields.size.times.to_a
+    end
+    Schema.new(Type::SPARSE_UNION, fields:, type_codes:, nullable:)
   end
 
-  def self.dense_union(fields, nullable: true)
-    Schema.new(Type::DENSE_UNION, fields:, nullable:)
+  def self.dense_union(fields, type_codes: nil, nullable: true)
+    if type_codes.nil?
+      type_codes = fields.size.times.to_a
+    end
+    Schema.new(Type::DENSE_UNION, fields:, type_codes:, nullable:)
   end
 end

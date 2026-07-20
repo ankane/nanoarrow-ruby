@@ -129,10 +129,14 @@ module Nanoarrow
         raise Todo
 
       elsif type == Type::SPARSE_UNION
-        raise Todo
+        type_codes = params.delete(:type_codes)
+        type_codes_str = type_codes.map { |code| Integer(code) }.join(",")
+        factory.set_format("+us:#{type_codes_str}")
 
       elsif type == Type::DENSE_UNION
-        raise Todo
+        type_codes = params.delete(:type_codes)
+        type_codes_str = type_codes.map { |code| Integer(code) }.join(",")
+        factory.set_format("+ud:#{type_codes_str}")
 
       else
         factory.set_type(type)

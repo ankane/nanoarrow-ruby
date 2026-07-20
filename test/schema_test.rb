@@ -104,6 +104,11 @@ class SchemaTest < Minitest::Test
     assert_type "map<entries: struct<key: int32, value: string>>", Nanoarrow.map(Nanoarrow.int32, Nanoarrow.string)
   end
 
+  def test_union
+    assert_type "sparse_union([0,1])<: int32, : string>", Nanoarrow.sparse_union([Nanoarrow.int32, Nanoarrow.string])
+    assert_type "dense_union([0,1])<: int32, : string>", Nanoarrow.dense_union([Nanoarrow.int32, Nanoarrow.string])
+  end
+
   def test_name
     assert_equal "", Nanoarrow.int32.name
 
