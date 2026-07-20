@@ -226,6 +226,32 @@ static VALUE schema_builder_set_child(VALUE self, VALUE idx, VALUE name, VALUE c
     return self;
 }
 
+static VALUE schema_builder_set_dictionary(VALUE self, VALUE dictionary)
+{
+    schema_builder_t* builder;
+    GetSchemaBuilder(self, builder);
+
+    schema_assert_valid(builder->c_schema);
+
+    int code;
+    if (builder->ptr->dictionary == NULL)
+    {
+        code = ArrowSchemaAllocateDictionary(builder->ptr);
+        raise_error_not_ok("ArrowSchemaAllocateDictionary()", code);
+    }
+
+    if (builder->ptr->dictionary->release != NULL)
+        ArrowSchemaRelease(builder->ptr->dictionary);
+
+    schema_t* dictionary_ptr;
+    GetSchema(dictionary, dictionary_ptr);
+
+    code = ArrowSchemaDeepCopy(dictionary_ptr->ptr, builder->ptr->dictionary);
+    raise_error_not_ok("ArrowSchemaDeepCopy()", code);
+
+    return self;
+}
+
 static VALUE schema_builder_set_flags(VALUE self, VALUE flags)
 {
     schema_builder_t* builder;
@@ -244,6 +270,19 @@ static VALUE schema_builder_set_nullable(VALUE self, VALUE nullable)
         builder->ptr->flags |= ARROW_FLAG_NULLABLE;
     else
         builder->ptr->flags &= ~ARROW_FLAG_NULLABLE;
+
+    return self;
+}
+
+static VALUE schema_builder_set_dictionary_ordered(VALUE self, VALUE dictionary_ordered)
+{
+    schema_builder_t* builder;
+    GetSchemaBuilder(self, builder);
+
+    if (RTEST(dictionary_ordered))
+        builder->ptr->flags |= ARROW_FLAG_DICTIONARY_ORDERED;
+    else
+        builder->ptr->flags &= ~ARROW_FLAG_DICTIONARY_ORDERED;
 
     return self;
 }
@@ -302,8 +341,10 @@ void Init_schema_builder(void)
     rb_define_method(cCSchemaBuilder, "set_name", schema_builder_set_name, 1);
     rb_define_method(cCSchemaBuilder, "allocate_children", schema_builder_allocate_children, 1);
     rb_define_method(cCSchemaBuilder, "set_child", schema_builder_set_child, 3);
+    rb_define_method(cCSchemaBuilder, "set_dictionary", schema_builder_set_dictionary, 1);
     rb_define_method(cCSchemaBuilder, "set_flags", schema_builder_set_flags, 1);
     rb_define_method(cCSchemaBuilder, "set_nullable", schema_builder_set_nullable, 1);
+    rb_define_method(cCSchemaBuilder, "set_dictionary_ordered", schema_builder_set_dictionary_ordered, 1);
     rb_define_method(cCSchemaBuilder, "set_map_keys_sorted", schema_builder_set_map_keys_sorted, 1);
     rb_define_method(cCSchemaBuilder, "validate", schema_builder_validate, 0);
     rb_define_method(cCSchemaBuilder, "finish", schema_builder_finish, 0);

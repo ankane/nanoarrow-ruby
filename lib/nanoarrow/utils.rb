@@ -126,7 +126,15 @@ module Nanoarrow
         end
 
       elsif type == Type::DICTIONARY
-        raise Todo
+        index_type = c_schema(params.delete(:index_type))
+        factory.set_format(index_type.format)
+
+        value_type = c_schema(params.delete(:value_type))
+        factory.set_dictionary(value_type)
+
+        if params.delete(:dictionary_ordered)
+          factory.set_dictionary_ordered(true)
+        end
 
       elsif type == Type::SPARSE_UNION
         type_codes = params.delete(:type_codes)
