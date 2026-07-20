@@ -282,8 +282,41 @@ static VALUE schema_arrow_c_schema(VALUE self)
     return schema_capsule;
 }
 
-static VALUE schema_modify(VALUE self, VALUE format, VALUE name, VALUE flags, VALUE nullable, VALUE metadata, VALUE children, VALUE dictionary, VALUE validate)
+static VALUE schema_modify(int argc, VALUE* argv, VALUE self)
 {
+    VALUE kwargs;
+    rb_scan_args(argc, argv, "0:", &kwargs);
+
+    ID keywords[8];
+    VALUE values[8];
+    keywords[0] = rb_intern("format");
+    keywords[1] = rb_intern("name");
+    keywords[2] = rb_intern("flags");
+    keywords[3] = rb_intern("nullable");
+    keywords[4] = rb_intern("metadata");
+    keywords[5] = rb_intern("children");
+    keywords[6] = rb_intern("dictionary");
+    keywords[7] = rb_intern("validate");
+    rb_get_kwargs(kwargs, keywords, 0, 8, values);
+
+    for (int i = 0; i < 8; i++)
+    {
+        if (values[i] == Qundef)
+            values[i] = Qnil;
+    }
+
+    VALUE format = values[0];
+    VALUE name = values[1];
+    VALUE flags = values[2];
+    VALUE nullable = values[3];
+    VALUE metadata = values[4];
+    VALUE children = values[5];
+    VALUE dictionary = values[6];
+    VALUE validate = values[7];
+
+    if (NIL_P(validate))
+        validate = Qtrue;
+
     VALUE builder = rb_funcall(cCSchemaBuilder, rb_intern("allocate"), 0);
 
     if (NIL_P(format))
@@ -373,6 +406,6 @@ void Init_schema(void)
     rb_define_method(cCSchema, "dictionary", schema_dictionary, 0);
     rb_define_method(cCSchema, "to_s", schema_to_s, 0);
     rb_define_method(cCSchema, "arrow_c_schema", schema_arrow_c_schema, 0);
-    rb_define_method(cCSchema, "modify", schema_modify, 8);
+    rb_define_method(cCSchema, "modify", schema_modify, -1);
     rb_define_method(cCSchema, "assert_valid", schema_assert_valid, 0);
 }

@@ -18,7 +18,7 @@ module Nanoarrow
       end
 
       if !name.nil? || !nullable.nil? || !metadata.nil? || !fields.nil?
-        @c_schema = @c_schema.modify(nil, name, nil, nullable, metadata, clean_fields(fields), nil, true)
+        @c_schema = @c_schema.modify(name:, nullable:, metadata:, children: clean_fields(fields))
       end
 
       @c_schema_view = CSchemaView.new(@c_schema)

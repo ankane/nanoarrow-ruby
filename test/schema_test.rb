@@ -100,6 +100,10 @@ class SchemaTest < Minitest::Test
     assert_type "fixed_size_list(3)<item: int32>", Nanoarrow.fixed_size_list(Nanoarrow.int32, 3)
   end
 
+  def test_map
+    assert_type "map<entries: struct<key: int32, value: string>>", Nanoarrow.map(Nanoarrow.int32, Nanoarrow.string)
+  end
+
   def test_name
     assert_equal "", Nanoarrow.int32.name
 

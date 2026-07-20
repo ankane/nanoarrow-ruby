@@ -248,6 +248,19 @@ static VALUE schema_builder_set_nullable(VALUE self, VALUE nullable)
     return self;
 }
 
+static VALUE schema_builder_set_map_keys_sorted(VALUE self, VALUE map_keys_sorted)
+{
+    schema_builder_t* builder;
+    GetSchemaBuilder(self, builder);
+
+    if (RTEST(map_keys_sorted))
+        builder->ptr->flags |= ARROW_FLAG_MAP_KEYS_SORTED;
+    else
+        builder->ptr->flags &= ~ARROW_FLAG_MAP_KEYS_SORTED;
+
+    return self;
+}
+
 static VALUE schema_builder_validate(VALUE self)
 {
     schema_builder_t* builder;
@@ -291,6 +304,7 @@ void Init_schema_builder(void)
     rb_define_method(cCSchemaBuilder, "set_child", schema_builder_set_child, 3);
     rb_define_method(cCSchemaBuilder, "set_flags", schema_builder_set_flags, 1);
     rb_define_method(cCSchemaBuilder, "set_nullable", schema_builder_set_nullable, 1);
+    rb_define_method(cCSchemaBuilder, "set_map_keys_sorted", schema_builder_set_map_keys_sorted, 1);
     rb_define_method(cCSchemaBuilder, "validate", schema_builder_validate, 0);
     rb_define_method(cCSchemaBuilder, "finish", schema_builder_finish, 0);
 }

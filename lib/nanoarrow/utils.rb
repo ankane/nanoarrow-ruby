@@ -106,7 +106,24 @@ module Nanoarrow
         factory.set_child(0, "item", c_schema(params.delete(:value_type)))
 
       elsif type == Type::MAP
-        raise Todo
+        key_schema = c_schema(params.delete(:key_type))
+        value_schema = c_schema(params.delete(:value_type))
+
+        entries = CSchemaBuilder.allocate
+        entries.set_format("+s")
+        entries.set_nullable(false)
+        entries.allocate_children(2)
+        entries.set_child(0, "key", key_schema.modify(nullable: false))
+        entries.set_child(1, "value", value_schema)
+
+        factory.set_format("+m")
+        factory.allocate_children(1)
+        factory.set_child(0, "entries", entries.finish)
+        factory.set_nullable(false)
+
+        if params.include?(:keys_sorted)
+          factory.set_map_keys_sorted(params.delete(:keys_sorted))
+        end
 
       elsif type == Type::DICTIONARY
         raise Todo
