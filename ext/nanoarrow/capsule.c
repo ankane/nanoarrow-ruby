@@ -77,10 +77,10 @@ static VALUE capsule_name(VALUE self)
     capsule_t* capsule;
     GetCapsule(self, capsule);
 
-    if (capsule->name == NULL)
-        return Qnil;
-    else
+    if (capsule->name != NULL)
         return rb_utf8_str_new_cstr(capsule->name);
+    else
+        return Qnil;
 }
 
 void Init_capsule(void)
