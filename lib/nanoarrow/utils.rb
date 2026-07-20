@@ -90,13 +90,20 @@ module Nanoarrow
         factory.set_type_fixed_size(type, Integer(params.delete(:byte_width)))
 
       elsif type == Type::LIST
-        raise Todo
+        factory.set_format("+l")
+        factory.allocate_children(1)
+        factory.set_child(0, "item", c_schema(params.delete(:value_type)))
 
       elsif type == Type::LARGE_LIST
-        raise Todo
+        factory.set_format("+L")
+        factory.allocate_children(1)
+        factory.set_child(0, "item", c_schema(params.delete(:value_type)))
 
       elsif type == Type::FIXED_SIZE_LIST
-        raise Todo
+        fixed_size = Integer(params.delete(:list_size))
+        factory.set_format("+w:%d" % fixed_size)
+        factory.allocate_children(1)
+        factory.set_child(0, "item", c_schema(params.delete(:value_type)))
 
       elsif type == Type::MAP
         raise Todo

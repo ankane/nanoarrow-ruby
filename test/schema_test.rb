@@ -95,12 +95,9 @@ class SchemaTest < Minitest::Test
   end
 
   def test_list
-    assert_raises(Nanoarrow::Todo) do
-      Nanoarrow.list(Nanoarrow.int32)
-    end
-    assert_raises(Nanoarrow::Todo) do
-      Nanoarrow.large_list(Nanoarrow.int32)
-    end
+    assert_type "list<item: int32>", Nanoarrow.list(Nanoarrow.int32)
+    assert_type "large_list<item: int32>", Nanoarrow.large_list(Nanoarrow.int32)
+    assert_type "fixed_size_list(3)<item: int32>", Nanoarrow.fixed_size_list(Nanoarrow.int32, 3)
   end
 
   def test_name

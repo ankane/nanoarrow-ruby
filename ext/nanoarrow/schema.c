@@ -227,6 +227,15 @@ static VALUE schema_child(VALUE self, VALUE rb_i)
     return obj;
 }
 
+static VALUE schema_children(VALUE self)
+{
+    int64_t n_children = NUM2LL(schema_n_children(self));
+    VALUE children = rb_ary_new();
+    for (int64_t i = 0; i < n_children; i++)
+        rb_ary_push(children, schema_child(self, LL2NUM(i)));
+    return children;
+}
+
 static VALUE schema_dictionary(VALUE self)
 {
     schema_t* schema;
@@ -306,8 +315,14 @@ static VALUE schema_modify(VALUE self, VALUE format, VALUE name, VALUE flags, VA
 
     if (NIL_P(children))
     {
-        if (NUM2LL(rb_funcall(self, rb_intern("n_children"), 0)) > 0)
-            raise_todo();
+        int64_t n_children = NUM2LL(rb_funcall(self, rb_intern("n_children"), 0));
+        if (n_children > 0)
+        {
+            rb_funcall(builder, rb_intern("allocate_children"), 1, LL2NUM(n_children));
+            VALUE self_children = rb_funcall(self, rb_intern("children"), 0);
+            for (long i = 0; i < RARRAY_LEN(self_children); i++)
+                rb_funcall(builder, rb_intern("set_child"), 3, LONG2NUM(i), Qnil, rb_ary_entry(self_children, i));
+        }
     }
     else if (RB_TYPE_P(children, T_HASH))
     {
@@ -354,6 +369,7 @@ void Init_schema(void)
     rb_define_method(cCSchema, "metadata", schema_metadata, 0);
     rb_define_method(cCSchema, "n_children", schema_n_children, 0);
     rb_define_method(cCSchema, "child", schema_child, 1);
+    rb_define_method(cCSchema, "children", schema_children, 0);
     rb_define_method(cCSchema, "dictionary", schema_dictionary, 0);
     rb_define_method(cCSchema, "to_s", schema_to_s, 0);
     rb_define_method(cCSchema, "arrow_c_schema", schema_arrow_c_schema, 0);
