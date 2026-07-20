@@ -311,8 +311,14 @@ static VALUE schema_modify(VALUE self, VALUE format, VALUE name, VALUE flags, VA
     }
     else if (RB_TYPE_P(children, T_HASH))
     {
-        rb_funcall(builder, rb_intern("allocate_children"), 1, RHASH_SIZE(children));
-        raise_todo();
+        // not as efficient as rb_hash_foreach, but simpler
+        VALUE keys = rb_funcall(children, rb_intern("keys"), 0);
+        rb_funcall(builder, rb_intern("allocate_children"), 1, RARRAY_LEN(keys));
+        for (long i = 0; i < RARRAY_LEN(keys); i++)
+        {
+            VALUE key = rb_ary_entry(keys, i);
+            rb_funcall(builder, rb_intern("set_child"), 3, LONG2NUM(i), key, rb_hash_lookup(children, key));
+        }
     }
     else
     {
