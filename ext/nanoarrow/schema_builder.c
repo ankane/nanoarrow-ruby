@@ -183,6 +183,49 @@ static VALUE schema_builder_set_name(VALUE self, VALUE name)
     return self;
 }
 
+static VALUE schema_builder_allocate_children(VALUE self, VALUE n)
+{
+    schema_builder_t* builder;
+    GetSchemaBuilder(self, builder);
+
+    schema_assert_valid(builder->c_schema);
+
+    int code = ArrowSchemaAllocateChildren(builder->ptr, NUM2LL(n));
+    raise_error_not_ok("ArrowSchemaAllocateChildren()", code);
+
+    return self;
+}
+
+static VALUE schema_builder_set_child(VALUE self, VALUE idx, VALUE name, VALUE child_src)
+{
+    schema_builder_t* builder;
+    GetSchemaBuilder(self, builder);
+
+    schema_assert_valid(builder->c_schema);
+
+    int64_t i = NUM2LL(idx);
+    if (i < 0 || i >= builder->ptr->n_children)
+        rb_raise(rb_eIndexError, "Index out of range");
+
+    if (builder->ptr->children[i]->release != NULL)
+        ArrowSchemaRelease(builder->ptr->children[i]);
+
+    schema_t* child_src_ptr;
+    GetSchema(child_src, child_src_ptr);
+
+    int code = ArrowSchemaDeepCopy(child_src_ptr->ptr, builder->ptr->children[i]);
+    raise_error_not_ok("ArrowSchemaDeepCopy()", code);
+
+    if (!NIL_P(name))
+    {
+        Check_Type(name, T_STRING);
+        code = ArrowSchemaSetName(builder->ptr->children[i], StringValueCStr(name));
+        raise_error_not_ok("ArrowSchemaSetName()", code);
+    }
+
+    return self;
+}
+
 static VALUE schema_builder_set_flags(VALUE self, VALUE flags)
 {
     schema_builder_t* builder;
@@ -244,6 +287,8 @@ void Init_schema_builder(void)
     rb_define_method(cCSchemaBuilder, "set_type_date_time", schema_builder_set_type_date_time, 3);
     rb_define_method(cCSchemaBuilder, "set_format", schema_builder_set_format, 1);
     rb_define_method(cCSchemaBuilder, "set_name", schema_builder_set_name, 1);
+    rb_define_method(cCSchemaBuilder, "allocate_children", schema_builder_allocate_children, 1);
+    rb_define_method(cCSchemaBuilder, "set_child", schema_builder_set_child, 3);
     rb_define_method(cCSchemaBuilder, "set_flags", schema_builder_set_flags, 1);
     rb_define_method(cCSchemaBuilder, "set_nullable", schema_builder_set_nullable, 1);
     rb_define_method(cCSchemaBuilder, "validate", schema_builder_validate, 0);

@@ -90,8 +90,9 @@ class SchemaTest < Minitest::Test
   end
 
   def test_struct
+    assert_type "struct<: int64, : string>", Nanoarrow.struct([Nanoarrow.int64, Nanoarrow.string])
     assert_raises(Nanoarrow::Todo) do
-      Nanoarrow.struct([])
+      Nanoarrow.struct({"a" => Nanoarrow.int64, "b" => Nanoarrow.string})
     end
   end
 

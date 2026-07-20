@@ -309,8 +309,18 @@ static VALUE schema_modify(VALUE self, VALUE format, VALUE name, VALUE flags, VA
         if (NUM2LL(rb_funcall(self, rb_intern("n_children"), 0)) > 0)
             raise_todo();
     }
-    else
+    else if (RB_TYPE_P(children, T_HASH))
+    {
+        rb_funcall(builder, rb_intern("allocate_children"), 1, RHASH_SIZE(children));
         raise_todo();
+    }
+    else
+    {
+        Check_Type(children, T_ARRAY);
+        rb_funcall(builder, rb_intern("allocate_children"), 1, RARRAY_LEN(children));
+        for (long i = 0; i < RARRAY_LEN(children); i++)
+            rb_funcall(builder, rb_intern("set_child"), 3, LONG2NUM(i), Qnil, rb_ary_entry(children, i));
+    }
 
     if (NIL_P(dictionary))
     {

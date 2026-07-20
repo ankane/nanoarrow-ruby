@@ -18,7 +18,7 @@ module Nanoarrow
       end
 
       if !name.nil? || !nullable.nil? || !metadata.nil? || !fields.nil?
-        @c_schema = @c_schema.modify(nil, name, nil, nullable, metadata, fields, nil, true)
+        @c_schema = @c_schema.modify(nil, name, nil, nullable, metadata, clean_fields(fields), nil, true)
       end
 
       @c_schema_view = CSchemaView.new(@c_schema)
@@ -80,6 +80,18 @@ module Nanoarrow
 
     def arrow_c_schema
       @c_schema.arrow_c_schema
+    end
+
+    private
+
+    def clean_fields(fields)
+      if fields.nil?
+        fields
+      elsif fields.is_a?(Hash)
+        fields.transform_values { |v| Utils.c_schema(v) }
+      else
+        fields.map { |v| Utils.c_schema(v) }
+      end
     end
   end
 end
