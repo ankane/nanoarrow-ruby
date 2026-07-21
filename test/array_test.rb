@@ -67,6 +67,28 @@ class ArrayTest < Minitest::Test
     assert_array [now, nil, now + 2], Nanoarrow::Array.new([now, nil, now + 2], Nanoarrow.timestamp("ns"))
   end
 
+  def test_decimal
+    require "bigdecimal"
+
+    assert_array [BigDecimal("1000"), nil, BigDecimal("-1.23456789")], Nanoarrow::Array.new([BigDecimal("1000"), nil, BigDecimal("-1.23456789")], Nanoarrow.decimal128(38, 10))
+    assert_array [BigDecimal("1000"), nil, BigDecimal("-1.23456789")], Nanoarrow::Array.new([BigDecimal("1000"), nil, BigDecimal("-1.23456789")], Nanoarrow.decimal256(38, 10))
+    assert_array [1000, nil, -1.23456789], Nanoarrow::Array.new([BigDecimal("1000"), nil, BigDecimal("-1.23456789")], Nanoarrow.decimal128(38, 10))
+    assert_array [BigDecimal("0.00005")], Nanoarrow::Array.new([BigDecimal("0.00005")], Nanoarrow.decimal128(38, 10))
+    assert_array [BigDecimal("1000")], Nanoarrow::Array.new([1000], Nanoarrow.decimal128(38, -3))
+
+    assert_raises(Nanoarrow::Todo) do
+      assert_array [BigDecimal("123")], Nanoarrow::Array.new([123], Nanoarrow.decimal128(2, 0))
+    end
+
+    assert_raises(Nanoarrow::Todo) do
+      Nanoarrow::Array.new([1.5], Nanoarrow.decimal128(38, 0))
+    end
+
+    assert_raises(Nanoarrow::Todo) do
+      Nanoarrow::Array.new([1000], Nanoarrow.decimal128(38, -4))
+    end
+  end
+
   def test_schema_missing
     assert_raises(Nanoarrow::Todo) do
       Nanoarrow::Array.new([1, nil, 3])

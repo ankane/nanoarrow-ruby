@@ -87,6 +87,12 @@ module Nanoarrow
       @c_builder.append_ints(obj)
     end
 
+    def append_decimals(obj)
+      obj = obj.map { |v| (v.nil? || v.is_a?(BigDecimal)) ? v : BigDecimal(v.to_s) }
+      bitwidth = @schema_view.type_id == Type::DECIMAL128 ? 128 : 256
+      @c_builder.append_decimals(obj, bitwidth, @schema_view.decimal_precision, @schema_view.decimal_scale)
+    end
+
     ARRAY_BUILDER_FROM_ITERABLE_METHOD = {
       Type::BOOL => :append_bools,
       Type::INT8 => :append_ints,
@@ -109,7 +115,9 @@ module Nanoarrow
       Type::FIXED_SIZE_BINARY => :append_bytes,
       Type::DATE32 => :append_dates,
       Type::DATE64 => :append_dates,
-      Type::TIMESTAMP => :append_timestamps
+      Type::TIMESTAMP => :append_timestamps,
+      Type::DECIMAL128 => :append_decimals,
+      Type::DECIMAL256 => :append_decimals
     }
   end
 end

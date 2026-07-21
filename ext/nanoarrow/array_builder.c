@@ -231,6 +231,72 @@ static VALUE array_builder_append_bytes(VALUE self, VALUE obj)
     return self;
 }
 
+static VALUE array_builder_append_decimals(VALUE self, VALUE obj, VALUE bitwidth, VALUE precision, VALUE scale)
+{
+    array_builder_t* builder;
+    GetArrayBuilder(self, builder);
+
+    int pi = NUM2INT(precision);
+    int si = NUM2INT(scale);
+    VALUE pad = rb_str_new_cstr("0");
+
+    struct ArrowDecimal decimal;
+    ArrowDecimalInit(&decimal, NUM2INT(bitwidth), pi, si);
+
+    Check_Type(obj, T_ARRAY);
+
+    for (long i = 0; i < RARRAY_LEN(obj); i++)
+    {
+        VALUE v = rb_ary_entry(obj, i);
+        int code;
+
+        if (NIL_P(v))
+            code = ArrowArrayAppendNull(builder->ptr, 1);
+        else
+        {
+            VALUE split = rb_funcall(v, rb_intern("split"), 0);
+            VALUE sign = rb_ary_entry(split, 0);
+            VALUE digits = rb_ary_entry(split, 1);
+            VALUE base = rb_ary_entry(split, 2);
+            VALUE exponent = rb_ary_entry(split, 3);
+
+            if (NUM2INT(base) != 10)
+                raise_todo();
+
+            Check_Type(digits, T_STRING);
+
+            // exceeds precision
+            // TODO better error
+            if (RSTRING_LEN(digits) > pi)
+                raise_todo();
+
+            int target = si + NUM2INT(exponent);
+
+            // exceeds scale
+            // TODO either round in Ruby or better error
+            if (RSTRING_LEN(digits) > target)
+                raise_todo();
+
+            digits = rb_funcall(digits, rb_intern("ljust"), 2, INT2NUM(target), pad);
+
+            struct ArrowStringView sv;
+            sv.data = StringValuePtr(digits);
+            sv.size_bytes = RSTRING_LEN(digits);
+            code = ArrowDecimalSetDigits(&decimal, sv);
+            raise_error_not_ok("ArrowDecimalSetDigits()", code);
+
+            if (NUM2INT(sign) == -1)
+                ArrowDecimalNegate(&decimal);
+
+            code = ArrowArrayAppendDecimal(builder->ptr, &decimal);
+        }
+
+        raise_error_not_ok("ArrowArrayAppendDecimal()", code);
+    }
+
+    return self;
+}
+
 static VALUE array_builder_finish(VALUE self)
 {
     array_builder_t* builder;
@@ -264,5 +330,6 @@ void Init_array_builder(void)
     rb_define_method(cCArrayBuilder, "append_doubles", array_builder_append_doubles, 1);
     rb_define_method(cCArrayBuilder, "append_strings", array_builder_append_strings, 1);
     rb_define_method(cCArrayBuilder, "append_bytes", array_builder_append_bytes, 1);
+    rb_define_method(cCArrayBuilder, "append_decimals", array_builder_append_decimals, 4);
     rb_define_method(cCArrayBuilder, "finish", array_builder_finish, 0);
 }
