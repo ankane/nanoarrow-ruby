@@ -182,11 +182,7 @@ static VALUE array_view_each_decimal(VALUE self, VALUE bitwidth, VALUE precision
         {
             ArrowArrayViewGetDecimalUnsafe(view->ptr, i, &decimal);
             int code = ArrowDecimalAppendStringToBuffer(&decimal, &buffer);
-            if (code != NANOARROW_OK)
-            {
-                ArrowBufferReset(&buffer);
-                raise_error_not_ok("ArrowDecimalAppendStringToBuffer()", code);
-            }
+            raise_error_not_ok("ArrowDecimalAppendStringToBuffer()", code);
             v = rb_str_new((char*) buffer.data, buffer.size_bytes);
             ArrowBufferReset(&buffer);
         }
