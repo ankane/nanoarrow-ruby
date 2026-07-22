@@ -51,9 +51,8 @@ static VALUE array_stream_import_from_c_capsule(VALUE klass, VALUE schema_capsul
 
 static VALUE array_stream_from_c_arrays(VALUE klass, VALUE arrays, VALUE schema, VALUE validate)
 {
-    array_stream_t* stream;
-    VALUE out = array_stream_allocate(klass);
-    GetArrayStream(out, stream);
+    struct ArrowArrayStream* c_array_stream_out;
+    VALUE base = alloc_c_array_stream(&c_array_stream_out);
 
     // TODO move to parameter
     VALUE move = Qfalse;
@@ -73,18 +72,15 @@ static VALUE array_stream_from_c_arrays(VALUE klass, VALUE arrays, VALUE schema,
     else
         out_schema = rb_funcall(schema, rb_intern("deep_dup"), 0);
 
-    schema_t* schema_ptr;
-    GetSchema(out_schema, schema_ptr);
+    schema_t* out_schema_ptr;
+    GetSchema(out_schema, out_schema_ptr);
 
     Check_Type(arrays, T_ARRAY);
     long arrays_len = RARRAY_LEN(arrays);
 
-    stream->base = alloc_c_array_stream(&stream->ptr);
-
-    int code = ArrowBasicArrayStreamInit(stream->ptr, schema_ptr->ptr, arrays_len);
+    int code = ArrowBasicArrayStreamInit(c_array_stream_out, out_schema_ptr->ptr, arrays_len);
     raise_error_not_ok("ArrowBasicArrayStreamInit()", code);
 
-    struct ArrowArrayStream* c_array_stream_out = stream->ptr;
     struct ArrowArray tmp;
     for (long i = 0; i < arrays_len; i++)
     {
@@ -110,6 +106,11 @@ static VALUE array_stream_from_c_arrays(VALUE klass, VALUE arrays, VALUE schema,
         raise_message_not_ok(&error, "ArrowBasicArrayStreamValidate()", code);
     }
 
+    array_stream_t* stream;
+    VALUE out = array_stream_allocate(klass);
+    GetArrayStream(out, stream);
+    stream->base = base;
+    stream->ptr = c_array_stream_out;
     return out;
 }
 
