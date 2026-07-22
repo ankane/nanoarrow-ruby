@@ -96,6 +96,14 @@ module Nanoarrow
     def append_struct(obj)
       keys = @schema.children.map(&:name)
       objs = keys.map { |k| obj.map { |v| v.nil? ? v : v.fetch(k) } }
+
+      # check for extra keys
+      obj.each do |v|
+        if !v.nil? && v.except(*keys).any?
+          raise ArgumentError, "extra keys"
+        end
+      end
+
       arrays = @schema.children.zip(objs).map { |s, v| Utils.c_array(v, s) }
       arrays.each_with_index do |a, i|
         @c_builder.set_child(i, a)

@@ -97,8 +97,10 @@ class ArrayTest < Minitest::Test
       Nanoarrow::Array.new([{}], Nanoarrow.struct({"a" => Nanoarrow.int32}))
     end
 
-    # TODO raise error for extra rows
-    Nanoarrow::Array.new([{"a" => 1, "b" => "one"}], Nanoarrow.struct({"a" => Nanoarrow.int32}))
+    error = assert_raises(ArgumentError) do
+      Nanoarrow::Array.new([{"a" => 1, "b" => "one"}], Nanoarrow.struct({"a" => Nanoarrow.int32}))
+    end
+    assert_equal "extra keys", error.message
   end
 
   def test_schema_missing
