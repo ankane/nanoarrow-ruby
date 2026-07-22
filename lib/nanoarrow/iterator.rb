@@ -105,9 +105,7 @@ module Nanoarrow
     end
 
     def each_struct(&block)
-      if @children.empty?
-        raise Todo
-      else
+      if @children.any?
         keys = @schema.children.map(&:name)
         @children[0].each.zip(*@children[1..]) do |v|
           block.call(keys.zip(v).to_h)
