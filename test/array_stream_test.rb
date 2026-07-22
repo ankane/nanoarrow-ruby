@@ -25,7 +25,7 @@ class ArrayStreamTest < Minitest::Test
     assert_equal [[1, 2, 3], [4, 5, 6]], chunks
   end
 
-  def test_polars
+  def test_from_polars
     skip unless polars?
 
     df = Polars::DataFrame.new({"a" => [1, 2, 3], "b" => ["one", "two", "three"]})
@@ -34,5 +34,14 @@ class ArrayStreamTest < Minitest::Test
     GC.start
     assert stream.schema
     assert stream.read_next
+  end
+
+  def test_to_polars
+    skip unless polars?
+
+    rows = [{"a" => 1, "b" => "one"}, {"a" => 2, "b" => nil}, {"a" => nil, "b" => "three"}]
+    arr = Nanoarrow::Array.new(rows, Nanoarrow.struct({"a" => Nanoarrow.int32, "b" => Nanoarrow.string}))
+    stream = Nanoarrow::ArrayStream.new(arr)
+    assert_equal rows, Polars::DataFrame.new(stream).to_a
   end
 end
