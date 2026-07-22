@@ -92,6 +92,7 @@ class SchemaTest < Minitest::Test
   def test_struct
     assert_type "struct<: int64, : string>", Nanoarrow.struct([Nanoarrow.int64, Nanoarrow.string])
     assert_type "struct<a: int64, b: string>", Nanoarrow.struct({"a" => Nanoarrow.int64, "b" => Nanoarrow.string})
+    assert_type "struct<a: int64>", Nanoarrow.struct({"a" => Nanoarrow.int64})
   end
 
   def test_list

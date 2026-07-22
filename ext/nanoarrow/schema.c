@@ -361,7 +361,8 @@ static VALUE schema_modify(int argc, VALUE* argv, VALUE self)
     {
         // not as efficient as rb_hash_foreach, but simpler
         VALUE keys = rb_funcall(children, rb_intern("keys"), 0);
-        rb_funcall(builder, rb_intern("allocate_children"), 1, RARRAY_LEN(keys));
+        Check_Type(keys, T_ARRAY);
+        rb_funcall(builder, rb_intern("allocate_children"), 1, LONG2NUM(RARRAY_LEN(keys)));
         for (long i = 0; i < RARRAY_LEN(keys); i++)
         {
             VALUE key = rb_ary_entry(keys, i);
