@@ -226,6 +226,9 @@ class ArrayTest < Minitest::Test
 
     rows = [{"a" => 1, "b" => "one"}, {"a" => 2, "b" => nil}, {"a" => nil, "b" => "three"}]
     arr = Nanoarrow::Array.new(rows, Nanoarrow.struct({"a" => Nanoarrow.int32, "b" => Nanoarrow.string}))
-    assert_equal rows, Polars::DataFrame.new(arr).to_a
+    df = Polars::DataFrame.new(arr)
+    arr = nil
+    GC.start
+    assert_equal rows, df.to_a
   end
 end

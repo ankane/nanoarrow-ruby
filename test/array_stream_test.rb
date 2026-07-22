@@ -42,6 +42,9 @@ class ArrayStreamTest < Minitest::Test
     rows = [{"a" => 1, "b" => "one"}, {"a" => 2, "b" => nil}, {"a" => nil, "b" => "three"}]
     arr = Nanoarrow::Array.new(rows, Nanoarrow.struct({"a" => Nanoarrow.int32, "b" => Nanoarrow.string}))
     stream = Nanoarrow::ArrayStream.new(arr)
-    assert_equal rows, Polars::DataFrame.new(stream).to_a
+    df = Polars::DataFrame.new(stream)
+    stream = nil
+    GC.start
+    assert_equal rows, df.to_a
   end
 end
