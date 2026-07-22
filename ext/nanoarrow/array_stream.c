@@ -57,7 +57,7 @@ static VALUE array_stream_from_c_arrays(VALUE klass, VALUE arrays, VALUE schema,
     // TODO move to parameter
     VALUE move = Qfalse;
 
-    VALUE out_schema;
+    VALUE out_schema = schema;
     VALUE validate_schema;
     if (RTEST(validate) && !RTEST(move))
     {
