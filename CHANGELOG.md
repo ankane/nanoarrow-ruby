@@ -1,4 +1,4 @@
-## 0.1.1 (unreleased)
+## 0.1.1 (2026-07-21)
 
 - Added support for more types
 
