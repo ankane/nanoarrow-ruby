@@ -140,7 +140,7 @@ class SchemaTest < Minitest::Test
     assert_equal metadata, schema.metadata
   end
 
-  def test_polars
+  def test_from_polars
     skip unless polars?
 
     df = Polars::DataFrame.new({"a" => [1, 2, 3], "b" => ["one", "two", "three"]})
@@ -157,6 +157,13 @@ class SchemaTest < Minitest::Test
       schema.field(-1)
     end
     assert_equal ["int64", "string_view"], schema.fields.map(&:type)
+  end
+
+  def test_to_polars
+    skip unless polars?
+
+    schema = Nanoarrow.struct({"a" => Nanoarrow.int32, "b" => Nanoarrow.string})
+    assert_equal ({"a" => Polars::Int32, "b" => Polars::String}), Polars::Schema.new(schema).to_h
   end
 
   private
