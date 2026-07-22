@@ -1,4 +1,4 @@
-## 0.1.2 (unreleased)
+## 0.1.2 (2026-07-22)
 
 - Fixed `to_a` method for struct type
 
