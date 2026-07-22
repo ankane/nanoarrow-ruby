@@ -180,6 +180,7 @@ class ArrayTest < Minitest::Test
         "d" => [now, nil, now + 2],
         "e" => [BigDecimal("1"), BigDecimal("0.001"), BigDecimal("-1.23456789")]
       })
+    rows = df.to_a
     a = Nanoarrow::Array.new(df)
     df = nil
     GC.start
@@ -199,5 +200,6 @@ class ArrayTest < Minitest::Test
     assert_raises(IndexError) do
       a.child(-1)
     end
+    assert_equal rows, a.to_a
   end
 end

@@ -76,6 +76,41 @@ static VALUE array_view_set_array(VALUE self, VALUE array)
     return self;
 }
 
+static VALUE array_view_n_children(VALUE self)
+{
+    array_view_t* view;
+    GetArrayView(self, view);
+
+    return LL2NUM(view->ptr->n_children);
+}
+
+static VALUE array_view_child(VALUE self, VALUE idx)
+{
+    array_view_t* view;
+    GetArrayView(self, view);
+
+    int64_t i = NUM2LL(idx);
+    if (i < 0 || i >= view->ptr->n_children)
+        rb_raise(rb_eIndexError, "out of range");
+
+    VALUE child = array_view_allocate(cCArrayView);
+    array_view_t* child_ptr;
+    GetArrayView(child, child_ptr);
+    child_ptr->base = view->base;
+    child_ptr->ptr = view->ptr->children[i];
+
+    return child;
+}
+
+static VALUE array_view_children(VALUE self)
+{
+    int64_t n_children = NUM2LL(array_view_n_children(self));
+    VALUE children = rb_ary_new();
+    for (int64_t i = 0; i < n_children; i++)
+        rb_ary_push(children, array_view_child(self, LL2NUM(i)));
+    return children;
+}
+
 static VALUE array_view_each_bool(VALUE self)
 {
     array_view_t* view;
@@ -198,6 +233,9 @@ void Init_array_view(void)
     rb_define_alloc_func(cCArrayView, array_view_allocate);
     rb_define_singleton_method(cCArrayView, "from_schema", array_view_from_schema, 1);
     rb_define_method(cCArrayView, "set_array", array_view_set_array, 1);
+    rb_define_method(cCArrayView, "n_children", array_view_n_children, 0);
+    rb_define_method(cCArrayView, "child", array_view_child, 1);
+    rb_define_method(cCArrayView, "children", array_view_children, 0);
     rb_define_method(cCArrayView, "each_bool", array_view_each_bool, 0);
     rb_define_method(cCArrayView, "each_int", array_view_each_int, 0);
     rb_define_method(cCArrayView, "each_uint", array_view_each_uint, 0);

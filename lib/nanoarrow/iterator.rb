@@ -1,9 +1,14 @@
 module Nanoarrow
   class ArrayViewBaseIterator
-    def initialize(schema)
+    def initialize(schema, array_view: nil)
       @schema = Utils.c_schema(schema)
       @schema_view = Utils.c_schema_view(schema)
-      @array_view = CArrayView.from_schema(@schema)
+
+      if array_view.nil?
+        @array_view = CArrayView.from_schema(@schema)
+      else
+        @array_view = array_view
+      end
     end
 
     def set_array(array)
@@ -23,11 +28,15 @@ module Nanoarrow
       end
     end
 
-    def initialize(schema)
-      super(schema)
+    def initialize(schema, array_view: nil)
+      super(schema, array_view: array_view)
+
+      @children = @schema.children.zip(@array_view.children).map { |s, v| make_child(s, v) }
     end
 
     def each(&block)
+      return to_enum(:each) unless block_given?
+
       type_id = @schema_view.type_id
       if !ITEMS_ITER_LOOKUP.include?(type_id)
         raise KeyError, "Can't resolve iterator for type #{@schema_view.type.inspect}"
@@ -38,6 +47,10 @@ module Nanoarrow
     end
 
     private
+
+    def make_child(schema, array_view)
+      self.class.new(schema, array_view: array_view)
+    end
 
     def each_bool(&block)
       @array_view.each_bool(&block)
@@ -91,6 +104,17 @@ module Nanoarrow
       @array_view.each_decimal(bitwidth, @schema_view.decimal_precision, @schema_view.decimal_scale, &wrap)
     end
 
+    def each_struct(&block)
+      if @children.empty?
+        raise Todo
+      else
+        keys = @schema.children.map(&:name)
+        @children[0].each.zip(*@children[1..]) do |v|
+          block.call(keys.zip(v).to_h)
+        end
+      end
+    end
+
     ITEMS_ITER_LOOKUP = {
       Type::BOOL => :each_bool,
       Type::INT8 => :each_int,
@@ -115,7 +139,8 @@ module Nanoarrow
       Type::DATE64 => :each_date,
       Type::TIMESTAMP => :each_timestamp,
       Type::DECIMAL128 => :each_decimal,
-      Type::DECIMAL256 => :each_decimal
+      Type::DECIMAL256 => :each_decimal,
+      Type::STRUCT => :each_struct
     }
   end
 end
