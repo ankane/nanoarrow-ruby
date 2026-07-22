@@ -93,6 +93,16 @@ module Nanoarrow
       @c_builder.append_decimals(obj, bitwidth, @schema_view.decimal_precision, @schema_view.decimal_scale)
     end
 
+    def append_struct(obj)
+      keys = @schema.children.map(&:name)
+      objs = keys.map { |k| obj.map { |v| v.nil? ? v : v.fetch(k) } }
+      arrays = @schema.children.zip(objs).map { |s, v| Utils.c_array(v, s) }
+      arrays.each_with_index do |a, i|
+        @c_builder.set_child(i, a)
+      end
+      @c_builder.set_length(objs[0].length)
+    end
+
     ARRAY_BUILDER_FROM_ITERABLE_METHOD = {
       Type::BOOL => :append_bools,
       Type::INT8 => :append_ints,
@@ -117,7 +127,8 @@ module Nanoarrow
       Type::DATE64 => :append_dates,
       Type::TIMESTAMP => :append_timestamps,
       Type::DECIMAL128 => :append_decimals,
-      Type::DECIMAL256 => :append_decimals
+      Type::DECIMAL256 => :append_decimals,
+      Type::STRUCT => :append_struct
     }
   end
 end

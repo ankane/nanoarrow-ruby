@@ -94,6 +94,7 @@ void Init_array(void)
     rb_define_alloc_func(cCArray, array_allocate);
     rb_define_method(cCArray, "schema", array_schema, 0);
     rb_define_method(cCArray, "valid?", array_is_valid, 0);
+    rb_define_method(cCArray, "assert_valid", array_assert_valid, 0);
     rb_define_method(cCArray, "length", array_length, 0);
     rb_define_method(cCArray, "child", array_child, 1);
 }

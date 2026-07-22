@@ -297,6 +297,98 @@ static VALUE array_builder_append_decimals(VALUE self, VALUE obj, VALUE bitwidth
     return self;
 }
 
+static VALUE array_builder_set_offset(VALUE self, VALUE offset)
+{
+    array_builder_t* builder;
+    GetArrayBuilder(self, builder);
+
+    rb_funcall(builder->c_array, rb_intern("assert_valid"), 0);
+    builder->ptr->offset = NUM2LL(offset);
+    return self;
+}
+
+static VALUE array_builder_set_length(VALUE self, VALUE length)
+{
+    array_builder_t* builder;
+    GetArrayBuilder(self, builder);
+
+    rb_funcall(builder->c_array, rb_intern("assert_valid"), 0);
+    builder->ptr->length = NUM2LL(length);
+    return self;
+}
+
+static VALUE array_builder_set_null_count(VALUE self, VALUE null_count)
+{
+    array_builder_t* builder;
+    GetArrayBuilder(self, builder);
+
+    rb_funcall(builder->c_array, rb_intern("assert_valid"), 0);
+    builder->ptr->null_count = NUM2LL(null_count);
+    return self;
+}
+
+static VALUE array_builder_resolve_null_count(VALUE self)
+{
+    array_builder_t* builder;
+    GetArrayBuilder(self, builder);
+
+    rb_funcall(builder->c_array, rb_intern("assert_valid"), 0);
+
+    VALUE format = rb_funcall(rb_funcall(builder->c_array, rb_intern("schema"), 0), rb_intern("format"), 0);
+    if (RTEST(rb_funcall(format, rb_intern("start_with?"), 1, rb_str_new_cstr("+us:"))) || RTEST(rb_funcall(format, rb_intern("start_with?"), 1, rb_str_new_cstr("+ud:"))))
+        return self;
+
+    if (builder->ptr->null_count != -1)
+        return self;
+
+    struct ArrowBuffer* validity_buffer = ArrowArrayBuffer(builder->ptr, 0);
+    if (validity_buffer->size_bytes == 0)
+    {
+        builder->ptr->null_count = 0;
+        return self;
+    }
+
+    int64_t bits = builder->ptr->offset + builder->ptr->length;
+    int64_t bytes_required = (bits >> 3) + ((bits & 7) != 0);
+
+    if (validity_buffer->size_bytes < bytes_required)
+        rb_raise(rb_eArgError, "validity bitmap mismatch");
+
+    int64_t count = ArrowBitCountSet(
+        validity_buffer->data,
+        builder->ptr->offset,
+        builder->ptr->length
+    );
+    builder->ptr->null_count = builder->ptr->length - count;
+
+    return self;
+}
+
+static VALUE array_builder_set_child(VALUE self, VALUE idx, VALUE c_array)
+{
+    array_builder_t* builder;
+    GetArrayBuilder(self, builder);
+
+    array_t* c_array_ptr;
+    GetArray(c_array, c_array_ptr);
+
+    VALUE child = rb_funcall(builder->c_array, rb_intern("child"), 1, idx);
+    array_t* child_ptr;
+    GetArray(child, child_ptr);
+    if (child_ptr->ptr->release != NULL)
+        ArrowArrayRelease(child_ptr->ptr);
+
+    // TODO move to parameter
+    VALUE move = Qfalse;
+
+    if (!RTEST(move))
+        c_array_shallow_copy(c_array_ptr->base, c_array_ptr->ptr, child_ptr->ptr);
+    else
+        ArrowArrayMove(c_array_ptr->ptr, child_ptr->ptr);
+
+    return self;
+}
+
 static VALUE array_builder_finish(VALUE self)
 {
     array_builder_t* builder;
@@ -331,5 +423,10 @@ void Init_array_builder(void)
     rb_define_method(cCArrayBuilder, "append_strings", array_builder_append_strings, 1);
     rb_define_method(cCArrayBuilder, "append_bytes", array_builder_append_bytes, 1);
     rb_define_method(cCArrayBuilder, "append_decimals", array_builder_append_decimals, 4);
+    rb_define_method(cCArrayBuilder, "set_offset", array_builder_set_offset, 1);
+    rb_define_method(cCArrayBuilder, "set_length", array_builder_set_length, 1);
+    rb_define_method(cCArrayBuilder, "set_null_count", array_builder_set_null_count, 1);
+    rb_define_method(cCArrayBuilder, "resolve_null_count", array_builder_resolve_null_count, 0);
+    rb_define_method(cCArrayBuilder, "set_child", array_builder_set_child, 2);
     rb_define_method(cCArrayBuilder, "finish", array_builder_finish, 0);
 }

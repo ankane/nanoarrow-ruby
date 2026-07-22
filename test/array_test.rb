@@ -89,6 +89,11 @@ class ArrayTest < Minitest::Test
     end
   end
 
+  def test_struct
+    rows = [{"a" => 1, "b" => "one"}, nil, {"a" => 3, "b" => "three"}]
+    assert_array rows, Nanoarrow::Array.new(rows, Nanoarrow.struct({"a" => Nanoarrow.int32, "b" => Nanoarrow.string}))
+  end
+
   def test_schema_missing
     assert_raises(Nanoarrow::Todo) do
       Nanoarrow::Array.new([1, nil, 3])

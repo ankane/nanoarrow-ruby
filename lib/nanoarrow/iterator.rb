@@ -108,7 +108,7 @@ module Nanoarrow
       if @children.any?
         keys = @schema.children.map(&:name)
         @children[0].each.zip(*@children[1..]) do |v|
-          block.call(keys.zip(v).to_h)
+          block.call(v[0].nil? ? nil : keys.zip(v).to_h)
         end
       end
     end
