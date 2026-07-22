@@ -198,5 +198,5 @@ void c_array_shallow_copy(VALUE base, const struct ArrowArray* src, struct Arrow
 
     ArrowArrayMove(tmp, dst);
 
-    (void) shelter;
+    RB_GC_GUARD(shelter);
 }
