@@ -110,15 +110,15 @@ class ArrayTest < Minitest::Test
   end
 
   def test_from_chunks
-    a = Nanoarrow::Array.from_chunks([[1, 2, 3], [4, 5, 6]], Nanoarrow.int32)
-    assert_equal 6, a.length
-    assert_equal 2, a.n_chunks
-    assert_array [1, 2, 3], a.chunk(0)
-    assert_array [4, 5, 6], a.chunk(1)
+    arr = Nanoarrow::Array.from_chunks([[1, 2, 3], [4, 5, 6]], Nanoarrow.int32)
+    assert_equal 6, arr.length
+    assert_equal 2, arr.n_chunks
+    assert_array [1, 2, 3], arr.chunk(0)
+    assert_array [4, 5, 6], arr.chunk(1)
     assert_raises(IndexError) do
-      a.chunk(2)
+      arr.chunk(2)
     end
-    assert_equal [[1, 2, 3], [4, 5, 6]], a.each_chunk.map(&:to_a)
+    assert_equal [[1, 2, 3], [4, 5, 6]], arr.each_chunk.map(&:to_a)
   end
 
   def test_int_range
@@ -195,33 +195,33 @@ class ArrayTest < Minitest::Test
         "e" => [BigDecimal("1"), BigDecimal("0.001"), BigDecimal("-1.23456789")]
       })
     rows = df.to_a
-    a = Nanoarrow::Array.new(df)
+    arr = Nanoarrow::Array.new(df)
     df = nil
     GC.start
-    assert_equal "#<Nanoarrow::Array struct<a: int64, b: string_view, c: date32, d: timestamp('ns', ''), e: decimal128(38, 8)>[3]>", a.inspect
-    schema = a.schema
+    assert_equal "#<Nanoarrow::Array struct<a: int64, b: string_view, c: date32, d: timestamp('ns', ''), e: decimal128(38, 8)>[3]>", arr.inspect
+    schema = arr.schema
     assert_equal "struct", schema.type
     assert_equal ["int64", "string_view", "date32", "timestamp", "decimal128"], schema.fields.map(&:type)
-    assert_equal 5, a.n_children
-    assert_array [1, 2, 3], a.child(0)
-    assert_array ["one", "two", "three"], a.child(1)
-    assert_array [today, nil, today + 2], a.child(2)
-    assert_array [now, nil, now + 2], a.child(3)
-    assert_array [BigDecimal("1"), BigDecimal("0.001"), BigDecimal("-1.23456789")], a.child(4)
+    assert_equal 5, arr.n_children
+    assert_array [1, 2, 3], arr.child(0)
+    assert_array ["one", "two", "three"], arr.child(1)
+    assert_array [today, nil, today + 2], arr.child(2)
+    assert_array [now, nil, now + 2], arr.child(3)
+    assert_array [BigDecimal("1"), BigDecimal("0.001"), BigDecimal("-1.23456789")], arr.child(4)
     assert_raises(IndexError) do
-      a.child(5)
+      arr.child(5)
     end
     assert_raises(IndexError) do
-      a.child(-1)
+      arr.child(-1)
     end
-    assert_equal rows, a.to_a
+    assert_equal rows, arr.to_a
   end
 
   def test_to_polars
     skip unless polars?
 
     rows = [{"a" => 1, "b" => "one"}, {"a" => 2, "b" => nil}, {"a" => nil, "b" => "three"}]
-    a = Nanoarrow::Array.new(rows, Nanoarrow.struct({"a" => Nanoarrow.int32, "b" => Nanoarrow.string}))
-    assert_equal rows, Polars::DataFrame.new(a).to_a
+    arr = Nanoarrow::Array.new(rows, Nanoarrow.struct({"a" => Nanoarrow.int32, "b" => Nanoarrow.string}))
+    assert_equal rows, Polars::DataFrame.new(arr).to_a
   end
 end
