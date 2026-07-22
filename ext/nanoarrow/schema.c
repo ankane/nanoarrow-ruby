@@ -372,7 +372,7 @@ static VALUE schema_modify(int argc, VALUE* argv, VALUE self)
     else
     {
         Check_Type(children, T_ARRAY);
-        rb_funcall(builder, rb_intern("allocate_children"), 1, RARRAY_LEN(children));
+        rb_funcall(builder, rb_intern("allocate_children"), 1, LONG2NUM(RARRAY_LEN(children)));
         for (long i = 0; i < RARRAY_LEN(children); i++)
             rb_funcall(builder, rb_intern("set_child"), 3, LONG2NUM(i), Qnil, rb_ary_entry(children, i));
     }
