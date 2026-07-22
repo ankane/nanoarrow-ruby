@@ -90,7 +90,7 @@ class ArrayTest < Minitest::Test
   end
 
   def test_struct
-    rows = [{"a" => 1, "b" => "one"}, nil, {"a" => 3, "b" => "three"}]
+    rows = [{"a" => 1, "b" => "one"}, {"a" => 2, "b" => nil}, {"a" => nil, "b" => "three"}]
     assert_array rows, Nanoarrow::Array.new(rows, Nanoarrow.struct({"a" => Nanoarrow.int32, "b" => Nanoarrow.string}))
 
     assert_raises(KeyError) do
@@ -179,7 +179,7 @@ class ArrayTest < Minitest::Test
     assert_equal expected, Nanoarrow::Array.new([1, nil, 3], Nanoarrow.int64).inspect
   end
 
-  def test_polars
+  def test_from_polars
     skip unless polars?
 
     require "bigdecimal"
@@ -215,5 +215,13 @@ class ArrayTest < Minitest::Test
       a.child(-1)
     end
     assert_equal rows, a.to_a
+  end
+
+  def test_to_polars
+    skip unless polars?
+
+    rows = [{"a" => 1, "b" => "one"}, {"a" => 2, "b" => nil}, {"a" => nil, "b" => "three"}]
+    a = Nanoarrow::Array.new(rows, Nanoarrow.struct({"a" => Nanoarrow.int32, "b" => Nanoarrow.string}))
+    assert_equal rows, Polars::DataFrame.new(a).to_a
   end
 end
