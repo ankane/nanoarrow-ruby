@@ -124,6 +124,10 @@ class SchemaTest < Minitest::Test
   def test_nullable
     assert_equal true, Nanoarrow.int32.nullable
     assert_equal false, Nanoarrow.int32(nullable: false).nullable
+    assert_equal true, Nanoarrow::Schema.new(Nanoarrow.int32).nullable
+    assert_equal false, Nanoarrow::Schema.new(Nanoarrow.int32(nullable: false)).nullable
+    assert_equal true, Nanoarrow::Schema.new(Nanoarrow.int32, name: "a").nullable
+    assert_equal false, Nanoarrow::Schema.new(Nanoarrow.int32(nullable: false), name: "a").nullable
   end
 
   def test_metadata
