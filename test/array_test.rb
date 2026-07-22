@@ -93,6 +93,10 @@ class ArrayTest < Minitest::Test
     rows = [{"a" => 1, "b" => "one"}, {"a" => 2, "b" => nil}, {"a" => nil, "b" => "three"}]
     assert_array rows, Nanoarrow::Array.new(rows, Nanoarrow.struct({"a" => Nanoarrow.int32, "b" => Nanoarrow.string}))
 
+    rows = [{"a" => 1, "b" => "one"}, nil, {"a" => 3, "b" => "three"}]
+    expected = [{"a" => 1, "b" => "one"}, {"a" => nil, "b" => nil}, {"a" => 3, "b" => "three"}]
+    assert_array expected, Nanoarrow::Array.new(rows, Nanoarrow.struct({"a" => Nanoarrow.int32, "b" => Nanoarrow.string}))
+
     assert_raises(KeyError) do
       Nanoarrow::Array.new([{}], Nanoarrow.struct({"a" => Nanoarrow.int32}))
     end
